@@ -1,0 +1,28 @@
+//[[Rcpp::depends(RcppArmadillo)]]
+#include <RcppArmadillo.h>
+#include <Rcpp.h>
+using namespace Rcpp;
+
+//[[Rcpp::export]]
+void ver1(double a, double b) {
+ Rcout << 1/R::rgamma(a, 1/b) << "\n";
+}
+
+//[[Rcpp::export]]
+void ver2(double a, double b) {
+  Rcout << b/R::rgamma(a, 1) << "\n";
+}
+
+
+
+
+/*** R
+a <- 0.01
+b <- 0.1
+
+set.seed(123)
+ver1(a, b)
+set.seed(123)
+ver2(a,b)
+
+*/

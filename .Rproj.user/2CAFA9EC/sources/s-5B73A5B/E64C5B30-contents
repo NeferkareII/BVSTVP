@@ -1,0 +1,17 @@
+n <- 100
+beta0 <- 0.2
+beta1 <- -1.8
+sigma <- 2
+
+x <- runif(n) + 1
+u <- rnorm(n, 0, sigma)
+y <- beta0 + beta1 * x + u
+plot(x, y, col = 2, pch = 16, xlab = "Price", ylab = "Demand",
+     ylim = c(-6.5, 1.5), main = bquote(sigma^2 ~ "=" ~ .(sigma^2)))
+abline(beta0, beta1, lwd = 4)
+
+yhat <- beta0 + beta1 * x
+
+for (i in 1:n) {
+ lines(c(x[i], x[i]), c(yhat[i], y[i]))
+}

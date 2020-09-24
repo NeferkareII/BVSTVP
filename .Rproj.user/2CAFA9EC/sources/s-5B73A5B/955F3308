@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1600936532944.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "955F3308",
+    "lastKnownWriteTime" : 1600962410,
+    "last_content_update" : 1600962410063,
+    "path" : "C:/Users/Peter/OneDrive/Dateien/BVS_chapter/application_BVS.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "55,0",
+        "scrollLine" : "30",
+        "tempName" : "Untitled2"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

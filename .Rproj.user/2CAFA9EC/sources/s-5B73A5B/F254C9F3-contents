@@ -1,0 +1,17 @@
+beta0 <- .2
+beta1 <- -1.8
+N <- 100
+
+x <- runif(N) + 1
+y <- beta0 + beta1*x + rnorm(N)
+
+mylm <- lm(y ~ x)
+
+plot(x, y, main = bquote(hat(beta)[0] ~ "=" ~ .(round(mylm$coef[1], 2)) ~
+			 "                  " ~ hat(beta)[1] ~ "=" ~ .(round(mylm$coef[2], 2))),
+     xlim = c(1,2), ylim = c(-5.5, 1.5), col = "black")
+
+abline(beta0, beta1, lty=2)
+abline(mylm)
+
+legend("topright", legend=c("estimated slope","true slope"), lty=c(1,2))

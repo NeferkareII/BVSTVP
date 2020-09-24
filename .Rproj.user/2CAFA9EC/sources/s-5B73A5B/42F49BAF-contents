@@ -1,0 +1,35 @@
+beta0 <- .2
+beta1 <- -1.8
+N <- 50
+sigma <- sqrt(.1)
+sigma2 <- sqrt(.01)
+
+par(mfrow = c(1,2))
+
+x <- runif(N) + 1
+y <- beta0 + beta1*x + rnorm(N, sd = sigma)
+
+mylm <- lm(y ~ x)
+
+plot(x, y, main = bquote(sigma^2 ~ "=" ~ .(sigma^2) ~ "    " ~ hat(beta)[0] ~ "=" ~ .(round(mylm$coef[1], 2)) ~
+			 "    " ~ hat(beta)[1] ~ "=" ~ .(round(mylm$coef[2], 2))),
+     xlim = c(1,2), ylim = c(-4.5, -.5), col = "red")
+
+abline(beta0, beta1, lty=2)
+abline(mylm)
+
+legend("topright", legend=c("estimated slope","true slope"), lty=c(1,2))
+
+x2 <- x
+y2 <- beta0 + beta1*x2 + rnorm(N, sd = sigma2)
+
+mylm2 <- lm(y2 ~ x2)
+
+plot(x2, y2, main = bquote(sigma^2 ~ "=" ~ .(sigma2^2) ~ "    " ~ hat(beta)[0] ~ "=" ~ .(round(mylm2$coef[1], 2)) ~
+			 "    " ~ hat(beta)[1] ~ "=" ~ .(round(mylm2$coef[2], 2))),
+     xlim = c(1,2), ylim = c(-4.5, -.5), col = "red", xlab = "x", ylab = "y")
+
+abline(beta0, beta1, lty=2)
+abline(mylm2)
+
+legend("topright", legend=c("estimated slope","true slope"), lty=c(1,2))

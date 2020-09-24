@@ -1,0 +1,5 @@
+dinvgamma <- function(x, s0, S0) {
+  S0^s0 / gamma(s0) * x^(-s0 - 1) * exp(-S0/x)
+}
+
+curve(dinvgamma(x, 0.001, 0.001), to = 20)
