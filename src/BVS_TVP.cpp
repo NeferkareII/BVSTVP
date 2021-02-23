@@ -84,22 +84,27 @@ List BVSTVP_cpp(arma::vec y,
   }
 
   // Objects required for stochvol to work
-  arma::mat mixprob(10, N);
-  arma::vec mixprob_vec(mixprob.begin(), mixprob.n_elem, false);
-  arma::ivec r(N);
+  arma::uvec r(N); r.fill(5);
   double h0_samp = as<double>(starting_vals["h0_st"]);
-  double B011inv         = 1e-8;
-  double B022inv         = 1e-12;
-  bool Gammaprior        = true;
-  double MHcontrol       = -1;
-  int parameterization   = 3;
-  bool centered_baseline = parameterization % 2; // 1 for C, 0 for NC baseline
-  int MHsteps = 2;
-  bool dontupdatemu = 0;
-  double cT = N/2.0;
-  double C0_sv = 1.5*Bsigma_sv;
-  bool truncnormal = false;
-  double priorlatent0 = -1;
+  using stochvol::PriorSpec;
+  const PriorSpec prior_spec = {  // prior specification object for the update_*_sv functions
+    PriorSpec::Latent0(),  // stationary prior distribution on priorlatent0
+    PriorSpec::Mu(PriorSpec::Normal(bmu, std::sqrt(Bmu))),  // normal prior on mu
+    PriorSpec::Phi(PriorSpec::Beta(a0_sv, b0_sv)),  // stretched beta prior on phi
+    PriorSpec::Sigma2(PriorSpec::Gamma(0.5, 0.5 / Bsigma_sv))  // normal(0, Bsigma) prior on sigma
+  };  // heavy-tailed, leverage, regression turned off
+  using stochvol::ExpertSpec_FastSV;
+  const ExpertSpec_FastSV expert {  // very expert settings for the Kastner, Fruehwirth-Schnatter (2014) sampler
+    true,  // interweave
+    stochvol::Parameterization::CENTERED,  // centered baseline always
+    1e-8,  // B011inv,
+    1e-12,  //B022inv,
+    2,  // MHsteps,
+    ExpertSpec_FastSV::ProposalSigma2::INDEPENDENCE,  // independece proposal for sigma
+    -1,  // unused for independence prior for sigma
+    ExpertSpec_FastSV::ProposalPhi::IMMEDIATE_ACCEPT_REJECT_NORMAL  // immediately reject (mu,phi,sigma) if proposed phi is outside (-1, 1)
+  };
+
 
   // Values for LPDS calculation
   arma::cube m_N_save(d, 1, nsave);
@@ -125,17 +130,22 @@ List BVSTVP_cpp(arma::vec y,
                         beta_samp,
                         theta_sr_samp,
                         beta_mean_samp);
-
-      shrinkTVP::sample_beta_McCausland(beta_nc_samp,
-                                        y,
-                                        x,
-                                        theta_sr_samp,
-                                        sigma2_samp,
-                                        beta_mean_samp,
-                                        m_N_samp,
-                                        chol_C_N_inv_samp);
+      shrinkTVP::FFBS(beta_nc_samp,
+                      y,
+                      x,
+                      theta_sr_samp,
+                      beta_mean_samp,
+                      sigma2_samp,
+                      m_N_samp,
+                      chol_C_N_inv_samp);
+      // Weave into centered parameterization
+      shrinkTVP::to_CP(beta_samp,
+                       beta_nc_samp,
+                       theta_sr_samp,
+                       beta_mean_samp);
     } catch (...) {
       beta_nc_samp.fill(nanl(""));
+      Rcout << theta_sr_samp << "\n" << sigma2_samp << "\n" << beta_mean_samp << "\n";
       if (succesful == true) {
         fail = "sample beta_nc";
         fail_iter = j + 1;
@@ -143,11 +153,7 @@ List BVSTVP_cpp(arma::vec y,
       }
     }
 
-    // Weave into centered parameterization
-    shrinkTVP::to_CP(beta_samp,
-                     beta_nc_samp,
-                     theta_sr_samp,
-                     beta_mean_samp);
+
 
     // sample beta_mean and theta
     try {
@@ -157,14 +163,7 @@ List BVSTVP_cpp(arma::vec y,
                              tau2,
                              s0,
                              S0);
-
-      // Weave back into NCP
       theta_sr_samp = arma::sqrt(theta_samp);
-      // shrinkTVP::to_NCP(beta_nc_samp,
-      //                   beta_samp,
-      //                   theta_sr_samp,
-      //                   beta_mean_samp);
-
     } catch (...) {
       theta_samp.fill(nanl(""));
       beta_mean_samp.fill(nanl(""));
@@ -178,49 +177,24 @@ List BVSTVP_cpp(arma::vec y,
     // sample sigma2 from homoscedastic or SV case
     try {
       if (sv) {
-
-        // shrinkTVP::to_CP(beta_samp,
-        //                  beta_nc_samp,
-        //                  theta_sr_samp,
-        //                  beta_mean_samp);
-        arma::vec datastand = 2 * arma::log(arma::abs(y - arma::sum(x % beta_samp.cols(1,N).t(), 1)));
+        arma::vec datastand = 2 * arma::log(arma::abs(y - x * beta_mean_samp - (x % beta_nc_samp.cols(1,N).t()) * theta_sr_samp));
+        std::for_each(datastand.begin(), datastand.end(), shrinkTVP::res_protector);
 
         // update_sv needs sigma and not sigma^2
-        sv_para(2) = std::sqrt(sv_para(2));
+        double mu = sv_para(0);
+        double phi = sv_para(1);
+        double sigma = std::sqrt(sv_para(2));
 
         arma::vec cur_h = arma::log(sigma2_samp);
-        stochvol::update_sv(datastand,
-                            sv_para,
-                            cur_h,
-                            h0_samp,
-                            mixprob_vec,
-                            r,
-                            centered_baseline,
-                            C0_sv,
-                            cT,
-                            Bsigma_sv,
-                            a0_sv,
-                            b0_sv,
-                            bmu,
-                            Bmu,
-                            B011inv,
-                            B022inv,
-                            Gammaprior,
-                            truncnormal,
-                            MHcontrol,
-                            MHsteps,
-                            parameterization,
-                            dontupdatemu,
-                            priorlatent0);
+        stochvol::update_fast_sv(datastand, mu, phi, sigma, h0_samp, cur_h, r, prior_spec, expert);
 
         // Write back into sample object
         sigma2_samp = arma::exp(cur_h);
 
-        std::for_each(sigma2_samp.begin(), sigma2_samp.end(), shrinkTVP::res_protector);
-
-
         // change back to sigma^2
-        sv_para(2) = std::pow(sv_para(2), 2);
+        sv_para = {mu, phi, std::pow(sigma, 2)};
+
+        std::for_each(sigma2_samp.begin(), sigma2_samp.end(), shrinkTVP::res_protector);
 
       } else {
         shrinkTVP::sample_sigma2(sigma2_samp,
@@ -318,7 +292,8 @@ List BVSTVP_cpp(arma::vec y,
                         _["success_vals"] = List::create(
                           _["success"] = succesful,
                           _["fail"] = fail,
-                          _["fail_iter"] = fail_iter)));
+                          _["fail_iter"] = fail_iter),
+                          _["x"] = x));
 
 
 }

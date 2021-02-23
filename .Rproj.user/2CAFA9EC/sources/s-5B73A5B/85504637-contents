@@ -1,6 +1,0 @@
-dat <- read.csv("https://raw.githubusercontent.com/osaukh/dashcoch-AT/master/data_AT/covid19_cases_austria.csv")
-plot(y = diff(dat$AT), x = as.Date(dat$Date)[2:nrow(dat)], type = "l", ylab = "New infections (Austria)", xlab = "")
-plot(diff())
-
-plot(diff(dat$W)/diff(dat$AT), x = as.Date(dat$Date)[2:nrow(dat)], type = "l", xlab = "")
-abline(h = 1897/8859, lty = 2, col = "forestgreen")

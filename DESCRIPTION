@@ -10,4 +10,4 @@ Encoding: UTF-8
 LazyData: true
 Imports: Rcpp (>= 1.0.3), shrinkTVP (>= 2.0)
 LinkingTo: Rcpp, shrinkTVP, RcppArmadillo, RcppProgress, stochvol
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1

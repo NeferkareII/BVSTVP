@@ -290,7 +290,7 @@ BVS_TVP <- function(formula,
                 "Try rerunning the model. ",
                 "If the sampler fails again, try changing the prior to be more informative. ",
                 "If the problem still persists, please contact the maintainer: ",
-                maintainer("shrinkTVP")))
+                maintainer("BVSTVP")))
   } else {
     res$internals$success_vals <- NULL
   }
