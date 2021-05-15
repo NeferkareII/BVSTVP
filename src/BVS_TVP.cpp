@@ -70,7 +70,7 @@ List BVSTVP_cpp(arma::vec y,
   theta_sr_samp = arma::sqrt(theta_samp);
 
   arma::vec sigma2_samp;
-  double C0_samp;
+  double C0_samp = 1;
   arma::vec sv_para(3);
   if (sv == true) {
     sigma2_samp = as<arma::vec>(starting_vals["sigma2_st"]);
@@ -114,8 +114,8 @@ List BVSTVP_cpp(arma::vec y,
 
   // Values to check if the sampler failed or not
   bool succesful = true;
-  std::string fail;
-  int fail_iter;
+  std::string fail = "";
+  int fail_iter = 0;
 
 
   // Introduce additional index post_j that is used to calculate accurate storage positions in case of thinning
